@@ -69,7 +69,7 @@ class_rep* get_pointee_class(lua_State* L, P const& p, class_id dynamic_id)
 
 // Create an appropriate instance holder for the given pointer like object.
 template <class P>
-void make_instance(lua_State* L, P p)
+void make_instance(lua_State* L, P&& p)
 {
     std::pair<class_id, void*> dynamic = get_dynamic_class(L, get_pointer(p));
 
@@ -82,13 +82,13 @@ void make_instance(lua_State* L, P p)
 
     object_rep* instance = push_new_instance(L, cls);
 
-    typedef pointer_holder<P> holder_type;
+    typedef pointer_holder<typename std::remove_reference<P>::type> holder_type;
 
     void* storage = instance->allocate(sizeof(holder_type));
 
     try
     {
-        new (storage) holder_type(p, dynamic.first, dynamic.second);
+        new (storage) holder_type(std::move(p), dynamic.first, dynamic.second);
     }
     catch (...)
     {
